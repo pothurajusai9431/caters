@@ -1,0 +1,22 @@
+name: Build iOS archive
+on:
+  workflow_dispatch:
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npx cap add ios
+      - run: npx capacitor-assets generate --ios
+        continue-on-error: true
+      - run: npx cap sync ios
+      # Unsigned archive. To produce an installable .ipa you must add your Apple Developer
+      # certificate and provisioning profile (as GitHub secrets) and export with signing.
+      - run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release \
+            -sdk iphoneos -archivePath build/App.xcarchive archive CODE_SIGNING_ALLOWED=NO
+      - uses: actions/upload-artifact@v4
+        with: { name: Caters-iOS-archive, path: build/App.xcarchive }

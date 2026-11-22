@@ -1,0 +1,12 @@
+/* APP START: screen rendering, navigation, animations, scroll handling and start-up. */
+function render(){if(!S.user&&['find','menu','book','acc'].indexOf(S.tab)>-1)S.tab='auth';if(S.user&&S.tab=='auth')S.tab='find';var t=S.tab,ch=S._t!==t;S._t=t;if(ch){S._rk='';S._tot=0}$('main').innerHTML=V(t);if(ch){var mn=$('main');mn.classList.remove('in');void mn.offsetWidth;mn.classList.add('in')}$('hello').textContent=S.user?'Hi, '+S.user.name.split(' ')[0]:'Bengaluru';
+ var tb=S.user?TABS_IN:TABS_OUT,nv=$('nav'),sg=S.user?'i':'o';if(nv.dataset.s!=sg){nv.innerHTML='<i class="pill"></i>'+tb.map(function(x){return '<button data-t="'+x[0]+'" onclick="S.tab=\''+x[0]+'\';render()">'+x[1]+'</button>'}).join('');nv.dataset.s=sg;nv.style.setProperty('--n',tb.length)}
+ var ai=0;nv.querySelectorAll('button').forEach(function(b,i){var on=b.dataset.t==t||(t=='menu'&&b.dataset.t=='find');if(on)ai=i;b.setAttribute('aria-current',on)});nv.querySelector('.pill').style.transform='translateX('+ai*100+'%)';
+ var st=$('stage');if(t=='menu'){st.className='stage'+(S.mini?' mini':'');lst();upd()}else{st.className='stage off';S.mini=false;upd()}$('main').scrollTop=0}
+function attach(){var st=$('stage');if(!GL){st.insertAdjacentHTML('afterbegin','<div class="empty">3D view needs WebGL on this device.</div>');return}
+ R.setPixelRatio(Math.min(devicePixelRatio||1,2));st.insertBefore(R.domElement,st.firstChild);CAM.position.set(0,4.9,3.9);CAM.lookAt(0,0,0);CAM.fov=34;
+ st.onpointerdown=function(e){drag=true;lastX=e.clientX;st.setPointerCapture(e.pointerId)};st.onpointermove=function(e){if(drag){A+=(e.clientX-lastX)*.8;lastX=e.clientX}};st.onpointerup=st.onpointercancel=function(){drag=false};
+ if(window.ResizeObserver)new ResizeObserver(function(){var w=st.clientWidth,h=st.clientHeight;if(w&&h){R.setSize(w,h,false);CAM.aspect=w/h;CAM.fov=h<150?25:34;CAM.updateProjectionMatrix()}}).observe(st)}
+var tk=0;$('main').addEventListener('scroll',function(){if(tk||S.tab!='menu')return;tk=requestAnimationFrame(function(){tk=0;var y=$('main').scrollTop,st=$('stage');if(y>150&&!S.mini){S.mini=true;st.classList.add('mini')}else if(y<30&&S.mini){S.mini=false;st.classList.remove('mini')}})},{passive:true});
+function tick(){if(GL&&S.tab=='menu'){if(!drag&&!RM)A+=.2;G.rotation.y=A*Math.PI/180;if(DROP){var u=DROP.userData;u.t+=.045;if(u.t>=1){DROP.position.y=0;DROP=null}else DROP.position.y=1.3*(1-u.t)*(1-u.t)*Math.abs(Math.cos(u.t*5))}R.render(SC,CAM)}requestAnimationFrame(tick)}
+initGL();thumbs();attach();apply();if(!S.user)S.tab='auth';render();tick();
